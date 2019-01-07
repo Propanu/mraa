@@ -87,7 +87,7 @@ main(void)
         std::cerr << "Error setting flow control UART" << std::endl;
     }
 
-    while (flag) {
+    if (flag) {
         /* send data through uart */
         uart->writeStr("Hello Mraa!");
 
