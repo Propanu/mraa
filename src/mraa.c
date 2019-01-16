@@ -112,7 +112,7 @@ mraa_boolean_t mraa_is_kernel_chardev_interface_compatible()
 
 mraa_boolean_t mraa_is_platform_chardev_interface_capable()
 {
-    if (plat->chardev_capable) {
+    if ((plat != NULL) && (plat->chardev_capable)) {
         return mraa_is_kernel_chardev_interface_compatible();
     }
 
@@ -1126,9 +1126,12 @@ mraa_link_targets(const char* filename, const char* targetname)
     int nchars = 0;
     char* buffer = NULL;
     while (nchars == 0) {
+        char* old_buffer = buffer;
         buffer = (char*) realloc(buffer, size);
-        if (buffer == NULL)
+        if (buffer == NULL) {
+            free(old_buffer);
             return 0;
+        }
         nchars = readlink(filename, buffer, size);
         if (nchars < 0) {
             free(buffer);
@@ -1374,8 +1377,10 @@ mraa_add_subplatform(mraa_platform_t subplatformtype, const char* dev)
             return MRAA_ERROR_FEATURE_NOT_SUPPORTED;
         }
         int i2c_bus;
-        if(mraa_atoi(strdup(dev), &i2c_bus) != MRAA_SUCCESS && i2c_bus < plat->i2c_bus_count) {
+        char *dev_dup = strdup(dev);
+        if(mraa_atoi(dev_dup, &i2c_bus) != MRAA_SUCCESS && i2c_bus < plat->i2c_bus_count) {
             syslog(LOG_NOTICE, "mraa: Cannot add GrovePi subplatform, invalid i2c bus specified");
+            free(dev_dup);
             return MRAA_ERROR_INVALID_PARAMETER;
         }
         if (mraa_grovepi_platform(plat, i2c_bus) == MRAA_GROVEPI) {

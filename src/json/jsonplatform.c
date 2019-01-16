@@ -291,7 +291,11 @@ mraa_init_json_platform_i2c(json_object* jobj_i2c, mraa_board_t* board, int inde
     json_object* jobj_temp = NULL;
 
     // Default to no mux pins defined
-    board->pins[pin].i2c.mux_total = 0;
+    if(board->pins != NULL) {
+        board->pins[pin].i2c.mux_total = 0;
+    } else {
+        return MRAA_ERROR_NO_DATA_AVAILABLE;
+    }
 
     // Get the I2C bus array index
     ret = mraa_init_json_platform_get_index(jobj_i2c, I2C_KEY, INDEX_KEY, index, &pos, board->i2c_bus_count - 1);
@@ -713,7 +717,13 @@ mraa_init_json_platform(const char* platform_json)
     // This one was allocated and assigned an "Unknown platform" value by now,
     // so we need to reallocate it.
     free(platform_name);
-    platform_name = calloc(strlen(plat->platform_name) + 1, sizeof(char));
+
+    if (!plat->platform_name) {
+        goto unsuccessful;
+    } else {
+        platform_name = calloc(strlen(plat->platform_name) + 1, sizeof(char));
+    }
+
     if (platform_name == NULL) {
         syslog(LOG_ERR, "init_json_platform: Could not allocate memory for platform_name");
         goto unsuccessful;
